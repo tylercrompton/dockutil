@@ -79,8 +79,8 @@ dockutil is a command line utility for managing Mac OS X dock items. It is writt
 
 ###plist_location_specifications
 
-- <path to a specific plist>
-- <path to a home directory>
+- `<path to a specific plist>`
+- `<path to a home directory>`
 - `--allhomes`
 - `--homeloc`
 
