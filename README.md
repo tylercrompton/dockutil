@@ -47,7 +47,7 @@ dockutil is a command line utility for managing Mac OS X dock items. It is writt
 - fix issue with removals when a url exists in a dock
 - adds option --version to output version
 
-##Usage:
+##Usage
 
     $ dockutil -h
     $ dockutil --add (<path to item> | <url>)
