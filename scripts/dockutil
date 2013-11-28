@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #   Copyright 2008 Kyle Crawford
 
@@ -19,96 +19,98 @@
 # Possible future enhancements
 # tie in with application identifier codes for locating apps and replacing them in the dock with newer versions?
 
+from __future__ import print_function, unicode_literals
 import sys, plistlib, subprocess, os, getopt, re, pipes
+from locale import getdefaultlocale
 from random import randrange
 
 
 # default verbose printing to off
 verbose = False
-version = '1.1.4'
+version = '2.0.0'
 
 def usage(e=None):
     """Displays usage information and error if one occurred"""
     name = os.path.basename(sys.argv[0])
 
-    print "usage:     %s -h" % (name,)
-    print "usage:     %s --add <path to item> | <url> [--label <label>] [ folder_options ] [ position_options ] [ plist_location_specification ] [--no-restart]" % (name,)
-    print "usage:     %s --remove <dock item label> | all [ plist_location_specification ] [--no-restart]" % (name,)
-    print "usage:     %s --move <dock item label>  position_options [ plist_location_specification ]" % (name,)
-    print "usage:     %s --find <dock item label> [ plist_location_specification ]" % (name,)
-    print "usage:     %s --list [ plist_location_specification ]" % (name,)
-    print "usage:     %s --version" % (name,)
-    print ""
-    print "position_options:"
-    print "  --replacing <dock item label name>                            replaces the item with the given dock label or adds the item to the end if item to replace is not found"
-    print "  --position [ index_number | beginning | end | middle ]        inserts the item at a fixed position: can be an position by index number or keyword"
-    print "  --after <dock item label name>                                inserts the item immediately after the given dock label or at the end if the item is not found"
-    print "  --before <dock item label name>                               inserts the item immediately before the given dock label or at the end if the item is not found"
-    print "  --section [ apps | others ]                                   specifies whether the item should be added to the apps or others section"
-    print ""
-    print "plist_location_specifications:"
-    print "  <path to a specific plist>                                    default is the dock plist for current user"
-    print "  <path to a home directory>"
-    print "  --allhomes                                                    attempts to locate all home directories and perform the operation on each of them"
-    print "  --homeloc                                                     overrides the default /Users location for home directories"
-    print ""
-    print "folder_options:"
-    print "  --view [grid|fan|list|automatic]                              stack view option"
-    print "  --display [folder|stack]                                      how to display a folder's icon"
-    print "  --sort [name|dateadded|datemodified|datecreated|kind]         sets sorting option for a folder view"
-    print ""
-    print "Examples:"
-    print "  The following adds TextEdit.app to the end of the current user's dock:"
-    print "           %s --add /Applications/TextEdit.app" % (name,)
-    print ""
-    print "  The following replaces Time Machine with TextEdit.app in the current user's dock:"
-    print "           %s --add /Applications/TextEdit.app --replacing 'Time Machine'" % (name,)
-    print ""
-    print "  The following adds TextEdit.app after the item Time Machine in every user's dock on that machine:"
-    print "           %s --add /Applications/TextEdit.app --after 'Time Machine' --allhomes" % (name,)
-    print ""
-    print "  The following adds ~/Downloads as a grid stack displayed as a folder for every user's dock on that machine:"
-    print "           %s --add '~/Downloads' --view grid --display folder --allhomes" % (name,)
-    print ""
-    print "  The following adds a url dock item after the Downloads dock item for every user's dock on that machine:"
-    print "           %s --add vnc://miniserver.local --label 'Mini VNC' --after Downloads --allhomes" % (name,)
-    print ""
-    print "  The following removes System Preferences from every user's dock on that machine:"
-    print "           %s --remove 'System Preferences' --allhomes" % (name,)
-    print ""
-    print "  The following moves System Preferences to the second slot on every user's dock on that machine:"
-    print "           %s --move 'System Preferences' --position 2 --allhomes" % (name,)
-    print ""
-    print "  The following finds any instance of iTunes in the specified home directory's dock:"
-    print "           %s --find iTunes /Users/jsmith" % (name,)
-    print ""
-    print "  The following lists all dock items for all home directories at homeloc in the form: item<tab>path<tab><section>tab<plist>"
-    print "           %s --list --homeloc /Volumes/RAID/Homes --allhomes" % (name,)
-    print ""
-    print "  The following adds Firefox after Safari in the Default User Template without restarting the Dock"
-    print "           %s --add /Applications/Firefox.app --after Safari --no-restart '/System/Library/User Template/English.lproj'" % (name,)
-    print ""
-    print ""
-    print "Notes:"
-    print "  When specifying a relative path like ~/Documents with the --allhomes option, ~/Documents must be quoted like '~/Documents' to get the item relative to each home"
-    print ""
-    print "Bugs:"
-    print "  Names containing special characters like accent marks will fail"
-    print ""
-    print ""
-    print "Contact:"
-    print "  Send bug reports and comments to kcrwfrd at gmail."
-    print ""
+    print("usage:     %s -h" % (name,))
+    print("usage:     %s --add <path to item> | <url> [--label <label>] [ folder_options ] [ position_options ] [ plist_location_specification ] [--no-restart]" % (name,))
+    print("usage:     %s --remove <dock item label> | all [ plist_location_specification ] [--no-restart]" % (name,))
+    print("usage:     %s --move <dock item label>  position_options [ plist_location_specification ]" % (name,))
+    print("usage:     %s --find <dock item label> [ plist_location_specification ]" % (name,))
+    print("usage:     %s --list [ plist_location_specification ]" % (name,))
+    print("usage:     %s --version" % (name,))
+    print("")
+    print("position_options:")
+    print("  --replacing <dock item label name>                            replaces the item with the given dock label or adds the item to the end if item to replace is not found")
+    print("  --position [ index_number | beginning | end | middle ]        inserts the item at a fixed position: can be an position by index number or keyword")
+    print("  --after <dock item label name>                                inserts the item immediately after the given dock label or at the end if the item is not found")
+    print("  --before <dock item label name>                               inserts the item immediately before the given dock label or at the end if the item is not found")
+    print("  --section [ apps | others ]                                   specifies whether the item should be added to the apps or others section")
+    print("")
+    print("plist_location_specifications:")
+    print("  <path to a specific plist>                                    default is the dock plist for current user")
+    print("  <path to a home directory>")
+    print("  --allhomes                                                    attempts to locate all home directories and perform the operation on each of them")
+    print("  --homeloc                                                     overrides the default /Users location for home directories")
+    print("")
+    print("folder_options:")
+    print("  --view [grid|fan|list|automatic]                              stack view option")
+    print("  --display [folder|stack]                                      how to display a folder's icon")
+    print("  --sort [name|dateadded|datemodified|datecreated|kind]         sets sorting option for a folder view")
+    print("")
+    print("Examples:")
+    print("  The following adds TextEdit.app to the end of the current user's dock:")
+    print("           %s --add /Applications/TextEdit.app" % (name,))
+    print("")
+    print("  The following replaces Time Machine with TextEdit.app in the current user's dock:")
+    print("           %s --add /Applications/TextEdit.app --replacing 'Time Machine'" % (name,))
+    print("")
+    print("  The following adds TextEdit.app after the item Time Machine in every user's dock on that machine:")
+    print("           %s --add /Applications/TextEdit.app --after 'Time Machine' --allhomes" % (name,))
+    print("")
+    print("  The following adds ~/Downloads as a grid stack displayed as a folder for every user's dock on that machine:")
+    print("           %s --add '~/Downloads' --view grid --display folder --allhomes" % (name,))
+    print("")
+    print("  The following adds a url dock item after the Downloads dock item for every user's dock on that machine:")
+    print("           %s --add vnc://miniserver.local --label 'Mini VNC' --after Downloads --allhomes" % (name,))
+    print("")
+    print("  The following removes System Preferences from every user's dock on that machine:")
+    print("           %s --remove 'System Preferences' --allhomes" % (name,))
+    print("")
+    print("  The following moves System Preferences to the second slot on every user's dock on that machine:")
+    print("           %s --move 'System Preferences' --position 2 --allhomes" % (name,))
+    print("")
+    print("  The following finds any instance of iTunes in the specified home directory's dock:")
+    print("           %s --find iTunes /Users/jsmith" % (name,))
+    print("")
+    print("  The following lists all dock items for all home directories at homeloc in the form: item<tab>path<tab><section>tab<plist>")
+    print("           %s --list --homeloc /Volumes/RAID/Homes --allhomes" % (name,))
+    print("")
+    print("  The following adds Firefox after Safari in the Default User Template without restarting the Dock")
+    print("           %s --add /Applications/Firefox.app --after Safari --no-restart '/System/Library/User Template/English.lproj'" % (name,))
+    print("")
+    print("")
+    print("Notes:")
+    print("  When specifying a relative path like ~/Documents with the --allhomes option, ~/Documents must be quoted like '~/Documents' to get the item relative to each home")
+    print("")
+    print("Bugs:")
+    print("  Names containing special characters like accent marks will fail")
+    print("")
+    print("")
+    print("Contact:")
+    print("  Send bug reports and comments to kcrwfrd at gmail.")
+    print("")
     if e != None:
-        print ""
-        print 'Error processing options:', e
+        print("")
+        print('Error processing options:', e)
     sys.exit(0)
 
 def verboseOutput(*args):
     """Used by verbose option (-v) to send more output to stdout"""
     if verbose:
         try:
-            print "verbose:", args
+            print("verbose:", args)
         except:
             pass
 
@@ -120,7 +122,7 @@ def main():
             "section=", "list", "find=", "add=", "move=", "replacing=",
             "remove=", "after=", "before=", "position=", "display=", "view=",
             "sort=", "label=", "type=", "allhomes", "homeloc=", "no-restart", "hupdock="])
-    except getopt.GetoptError, e:  # if parsing of options fails, display usage and parse error
+    except getopt.GetoptError as e:  # if parsing of options fails, display usage and parse error
         usage(e)
 
     # setup default values
@@ -152,7 +154,7 @@ def main():
         elif opt == "-v":
             verbose = True
         elif opt == "--version":
-            print version
+            print(version)
             sys.exit(0)
         elif opt == "--add":
             add_path = arg
@@ -233,7 +235,7 @@ def main():
             plist_paths = args
     # exit if we couldn't find any plists to process
     if len(plist_paths) < 1:
-        print 'no dock plists were found'
+        print('no dock plists were found')
         sys.exit(1)
 
     # loop over plist paths
@@ -252,7 +254,7 @@ def main():
             plist_path = os.path.abspath(plist_path)
             plist_path = pipes.quote(plist_path)
         else:
-            print plist_path, 'does not seem to be a home directory or a dock plist'
+            print(plist_path, 'does not seem to be a home directory or a dock plist')
             sys.exit(1)
 
 
@@ -263,7 +265,7 @@ def main():
                 commitPlist(pl, plist_path, restart_dock)
             else:
                 convertPlist(plist_path, 'binary1')
-                print 'item', remove_label, 'was not found in', plist_path
+                print('item', remove_label, 'was not found in', plist_path)
         elif list: # --list action
             try:
                 os.remove('/tmp/com.patternbuffer.dockutil.tmp.plist')
@@ -279,7 +281,7 @@ def main():
                 for item in pl[section]:
                     try:
                         # join and print relevant data into a string separated by tabs
-                        print '\t'.join((item['tile-data']['file-label'], item['tile-data']['file-data']['_CFURLString'], section, plist_path))
+                        print('\t'.join((item['tile-data']['file-label'], item['tile-data']['file-data']['_CFURLString'], section, plist_path)))
                     except:
                         pass
             # clean up temp file
@@ -304,7 +306,7 @@ def main():
                     try:
                         if pl[section][item_offset]['tile-data']['file-label'] == find_label:
                             item_found = True
-                            print find_label, "was found in", section, "at slot", item_offset+1, "in", plist_path
+                            print(find_label, "was found in", section, "at slot", item_offset+1, "in", plist_path)
                     except:
                         pass
             # clean up
@@ -313,7 +315,7 @@ def main():
             except:
                 pass
             if not item_found:
-                print find_label, "was not found in", plist_path
+                print(find_label, "was not found in", plist_path)
                 if not all_homes:  # only exit non-zero if we aren't processing all homes, because for allhomes, exit status for find would be irrelevant
                     sys.exit(1)
             
@@ -327,7 +329,7 @@ def main():
                 commitPlist(pl, plist_path, restart_dock)
             else:
                 convertPlist(plist_path, 'binary1')
-                print 'move failed for', move_label, 'in', plist_path
+                print('move failed for', move_label, 'in', plist_path)
 
         elif add_path != None:  # --add action
             if add_path.startswith('~'): # we've got a relative path and relative paths need to be processed by using a path relative to this home directory
@@ -365,7 +367,7 @@ def main():
                 commitPlist(pl, plist_path, restart_dock)
             else:
                 convertPlist(plist_path, 'binary1')
-                print 'item', add_path, 'was not added to Dock'
+                print('item', add_path, 'was not added to Dock')
                 if not all_homes:  # only exit non-zero if we aren't processing all homes, because for allhomes, exit status for add would be irrelevant
                     sys.exit(1)
 
@@ -378,7 +380,7 @@ def writePlist(pl, plist_path):
         try:
             plistlib.Plist.write(pl, plist_path)
         except:
-            print 'failed to write plist'
+            print('failed to write plist')
             sys.exit(5)
 
 def readPlist(plist_path):
@@ -390,13 +392,13 @@ def readPlist(plist_path):
         try:
             pl = plistlib.Plist.fromFile(plist_path)
         except:
-            print 'failed to read plist'
+            print('failed to read plist')
             sys.exit(5)
     return pl
 
 def path_as_string(path):
     """returns an unescaped string of the path"""
-    return subprocess.Popen('ls -d '+path, shell=True, stdout=subprocess.PIPE).stdout.read().rstrip('\n')
+    return subprocess.Popen('ls -d '+path, shell=True, stdout=subprocess.PIPE).stdout.read().decode(getdefaultlocale()[1]).rstrip('\n')
 
 def check_for_unique_guid(pl, new_guid):
     """loops thru items in the plist to ensure there isn't already a GUID in there that matches the generated GUID, returns False if the GUID is not unique"""
@@ -459,7 +461,7 @@ def moveItem(pl, move_label=None, position=None, before_item=None, after_item=No
                 try:
                     int(position)
                 except:
-                    print 'Invalid position', position
+                    print('Invalid position', position)
                     return False
                 pl[section].insert(int(position)-1, item_to_move)
                 return True
@@ -503,9 +505,9 @@ def addItem(pl, add_path, replace_label=None, position=None, before_item=None, a
     if replace_label != label_name:
         for existing_dock_item in (pl[section]):
             for label_key in ['file-label','label']:
-                if existing_dock_item['tile-data'].has_key(label_key):
+                if label_key in existing_dock_item['tile-data']:
                     if existing_dock_item['tile-data'][label_key] == label_name:
-                        print "%s already exists in dock. Use --replacing '%s' to update an existing item" % (label_name, label_name)
+                        print("%s already exists in dock. Use --replacing '%s' to update an existing item" % (label_name, label_name))
                         return False
 
 
@@ -526,7 +528,7 @@ def addItem(pl, add_path, replace_label=None, position=None, before_item=None, a
         new_item = {'GUID': new_guid, 'tile-data': {'file-data': {'_CFURLString': add_path, '_CFURLStringType': 0},'file-label': label_name, 'file-type': 32}, 'tile-type': tile_type}
     elif tile_type == 'directory-tile':
         if subprocess.Popen(['/usr/bin/sw_vers', '-productVersion'],
-                stdout=subprocess.PIPE).stdout.read().rstrip().split('.')[1] == '4': # gets the decimal after 10 in sw_vers; 10.4 does not use 10.5 options for stacks
+                stdout=subprocess.PIPE).stdout.read().decode(getdefaultlocale()[1]).rstrip().split('.')[1] == '4': # gets the decimal after 10 in sw_vers; 10.4 does not use 10.5 options for stacks
             new_item = {'GUID': new_guid, 'tile-data': {'directory': 1, 'file-data': {'_CFURLString': add_path, '_CFURLStringType': 0}, 'file-label': label_name, 'file-type': 2 }, 'tile-type': tile_type}
         else:
             new_item = {'GUID': new_guid, 'tile-data': {'arrangement': arrangement, 'directory': 1, 'displayas': displayas, 'file-data': {'_CFURLString': add_path, '_CFURLStringType': 0}, 'file-label': label_name, 'file-type': 2, 'showas': showas}, 'tile-type': tile_type}
@@ -534,7 +536,7 @@ def addItem(pl, add_path, replace_label=None, position=None, before_item=None, a
     elif tile_type == 'url-tile':
         new_item = {'GUID': new_guid, 'tile-data': {'label': label_name, 'url': {'_CFURLString': add_path, '_CFURLStringType': 15}}, 'tile-type': tile_type}
     else:
-        print 'unknown type:', tile_type
+        print('unknown type:', tile_type)
         sys.exit(1)
 
     verboseOutput('adding', new_item)
@@ -554,7 +556,7 @@ def addItem(pl, add_path, replace_label=None, position=None, before_item=None, a
             try:
                 int(position)
             except:
-                print 'Invalid position', position
+                print('Invalid position', position)
                 return False
             if int(position) == 0:
                 pl[section].insert(int(position), new_item)
@@ -583,18 +585,18 @@ def addItem(pl, add_path, replace_label=None, position=None, before_item=None, a
 def convertPlist(path, format):
     command = 'plutil -convert '+format+' '+path
     if os.system(command) != 0:
-        print 'failed to convert plist', '"'+path+'"'
+        print('failed to convert plist', '"'+path+'"')
         sys.exit(1)
 
 def removeItem(pl, item_name):
     removal_succeeded = False
     if item_name == "all":
-		for dock_item in pl['persistent-apps'][:]:
-			verboseOutput('found', dock_item)
-			pl['persistent-apps'].remove(dock_item)
-		for dock_item in pl['persistent-others'][:]:
-			pl['persistent-others'].remove(dock_item)
-		return True
+        for dock_item in pl['persistent-apps'][:]:
+            verboseOutput('found', dock_item)
+            pl['persistent-apps'].remove(dock_item)
+        for dock_item in pl['persistent-others'][:]:
+            pl['persistent-others'].remove(dock_item)
+        return True
     for dock_item in pl['persistent-apps']:
         if dock_item['tile-data'].get('file-label') == item_name:
             verboseOutput('found', item_name)
@@ -632,7 +634,7 @@ def plistFromPath(plist_path):
 
 def label_key_for_tile(item):
     for label_key in ['file-label','label']:
-        if item.has_key(label_key):
+        if label_key in item:
             return label_key
 
 def removeLongs(pl):  # plistlib can't handle writing longs, so we are removing them as a temporary workaround (hack).  plistlib is fixed, but the version in Leopard is still broken as of 10.5.2  Apple radar 5820629  http://svn.python.org/view?rev=60098&view=rev
