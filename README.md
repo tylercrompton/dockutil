@@ -35,17 +35,15 @@ dockutil is a command line utility for managing Mac OS X dock items. It is writt
 - add legacy support --hupdock option for backward compatibility
 - fix paths with spaces when passing full path to plist
 
-
 ###Version 1.1
 
 - fixes many issues with paths (should now work with Default User Template)
-- adds option to not restart the dock (--no-restart)
-- fixes issue where item would be added multiple times
-(use --replacing to update an existing item)
+- adds option to not restart the dock (`--no-restart`)
+- fixes issue where item would be added multiple times (use `--replacing` to update an existing item)
 - resolves deprecation warnings
-- adds option to remove all items (--remove all)
+- adds option to remove all items (`--remove all`)
 - fix issue with removals when a url exists in a dock
-- adds option --version to output version
+- adds option `--version` to output version
 
 ##Usage
 
@@ -66,16 +64,16 @@ dockutil is a command line utility for managing Mac OS X dock items. It is writt
 
 ###folder_options
 
-- `--view [grid | fan | list | automatic]`
-- `--display [folder | stack]`
-- `--sort [name | dateadded | datemodified | datecreated | kind]`
+- `--view (grid | fan | list | automatic)`
+- `--display (folder | stack)`
+- `--sort (name | dateadded | datemodified | datecreated | kind)`
 
 ###position
 - `--replacing <dock item label name>`
-- `--position [index_number | beginning | end | middle]`
+- `--position (index_number | beginning | end | middle)`
 - `--after <dock item label name>`
 - `--before <dock item label name>`
-- `--section [apps | others]`
+- `--section (apps | others)`
 
 ###plist_location_specifications
 
