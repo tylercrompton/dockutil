@@ -32,7 +32,7 @@ dockutil is a command line utility for managing Mac OS X dock items. It is writt
 ###Version 1.1.2
 
 - fix issue with replacing a url dock item
-- add legacy support --hupdock option for backward compatibility
+- add legacy support `--hupdock` option for backward compatibility
 - fix paths with spaces when passing full path to plist
 
 ###Version 1.1
